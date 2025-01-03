@@ -1,8 +1,15 @@
 ﻿
+using System;
+using System.Collections.Generic;
+using System.Net.Sockets;
 using Sylvan.Data.Excel;
 using Microsoft.VisualStudio.Services.WebApi.Patch.Json;
 using Microsoft.VisualStudio.Services.WebApi.Patch;
-
+using System.Threading.Tasks;
+using Microsoft.TeamFoundation.WorkItemTracking.WebApi;
+using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
+using Microsoft.VisualStudio.Services.Common;
+using Microsoft.VisualStudio.Services.WebApi;
 
 namespace AzureWriter
 {
@@ -97,16 +104,44 @@ namespace AzureWriter
                             azu.AzureData.Add(doe);
                             break;
 
+                        case "UpdateByTag":
+
+                              // Get work items with the supplied tag
+                              string tag = edr.GetString((int)Column.Tags);
+                              string WIT = edr.GetString((int)Column.WorkItemType);
+                              var writer = new QueryExecutor(azu.ServerPath, azu.Pat, azu.Project);
+                              //  string query = $"SELECT [System.Id], FROM WorkItems WHERE [System.Tags] CONTAINS '" + tag + "'";
+                              string query = $"SELECT [System.Id] FROM Workitems WHERE [System.Tags] CONTAINS '" + tag + "'" + "AND [System.WorkItemType] = '" + WIT + "'";
+
+                              var fields = new[] { "System.Id"};
+                              var tagResult = writer.Execute(query, fields).Result;
+                              
+                              // Create a patch document  for each WorkItem
+                              foreach (WorkItem item in tagResult)
+                              {
+                                  DevOpsEntryDao doDao = new DevOpsEntryDao();
+                                  doDao.Operation = type;
+                                  if (item.Id != null){ doDao.WorkItemId = (int)item.Id;} ;
+                                  JsonPatchDocument localPatchDocument = new JsonPatchDocument();
+                                  GeneratePatchDocument(azu, edr, localPatchDocument);
+                                  doDao.PatchDocument = localPatchDocument;
+                                  azu.AzureData.Add(doDao);
+                              }
+                            break;
+
                         default:
                             break;
+
                     }
+
+                    // iterate sheets
                 }
-                // iterate sheets
             } while (edr.NextResult());
+
             return azu;
         }
 
- 
+
         private void GeneratePatchDocument(AzureDevOpsDao azu, ExcelDataReader edr, JsonPatchDocument patchDocument)
         {
             // Add fields to your patch document
@@ -248,69 +283,6 @@ namespace AzureWriter
              );
             }
         }
-        /*       private void GenerateModifyPatchDocument(AzureDevOpsDAO azu, ExcelDataReader edr, JsonPatchDocument patchDocument)
-        {
-            //add fields and their values to your patch document
-            if (!string.IsNullOrEmpty(edr.GetString((int)Column.Title)))
-            {
-                patchDocument.Add(
-                    new JsonPatchOperation()
-                    {
-                        Operation = Operation.Add,
-                        Path = "/fields/System.Title",
-                        Value = edr.GetString((int)Column.Title)
-                    }
-                );
-            }
-
-            if (!string.IsNullOrEmpty(edr.GetString((int)Column.Description)))
-            {
-                patchDocument.Add(
-                    new JsonPatchOperation()
-                    {
-                        Operation = Operation.Add,
-                        Path = "/fields/System.Description",
-                        Value = edr.GetString((int)Column.Description)
-                    }
-                );
-            }
-
-            if (!string.IsNullOrEmpty(edr.GetString((int)Column.Priority)))
-            {
-                patchDocument.Add(
-                    new JsonPatchOperation()
-                    {
-                        Operation = Operation.Add,
-                        Path = "/fields/Microsoft.VSTS.Common.Priority",
-                        Value = edr.GetString((int)Column.Priority)
-                    }
-                );
-            }
-
-            if (!string.IsNullOrEmpty(edr.GetString((int)Column.Severity)))
-            {
-                patchDocument.Add(
-                    new JsonPatchOperation()
-                    {
-                        Operation = Operation.Add,
-                        Path = "/fields/Microsoft.VSTS.Common.Severity",
-                        Value = edr.GetString((int)Column.Severity)
-                    }
-                );
-            }
-            if (!string.IsNullOrEmpty(edr.GetString((int)Column.Tags)))
-            {
-                patchDocument.Add(
-                    new JsonPatchOperation()
-                    {
-                        Operation = Operation.Add,
-                        Path = "/fields/System.Tags",
-                        Value = edr.GetString((int)Column.Tags)
-                    }
-                );
-            }
-        }
- */
     }
 }
 

@@ -73,7 +73,22 @@ namespace AzureWriter
                        break;
                    }
 
-                   default:
+                   case "UpdateByTag":
+                   {
+                       try
+                       {
+                           var result = _workItemTrackingHttpClient.UpdateWorkItemAsync(doe.PatchDocument, doe.WorkItemId).Result;
+                           Console.WriteLine("Item Successfully Updated: Item #{0}", result.Id);
+                       }
+                            catch (AggregateException ex)
+                       {
+                           if (ex.InnerException != null)
+                               Console.WriteLine("Error Updating Work item by tag: #{0}", ex.InnerException.Message);
+                       }
+                       break;
+                   }
+
+                    default:
                    {
                        break;
                    }

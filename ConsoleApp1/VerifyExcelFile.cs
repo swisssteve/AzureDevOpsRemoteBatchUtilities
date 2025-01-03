@@ -27,7 +27,6 @@ namespace AzureWriter
                 while (edr.Read())
                 {
                     VerifyRow(edr, ref status);
-                    int a = 1;
                 }
                 // iterate sheets
                 
@@ -84,10 +83,11 @@ namespace AzureWriter
         private void VerifyRow(ExcelDataReader edr, ref bool status)
         {
             // Validate the operation string is one of the excepted values
-            if (!(edr.GetString((int)Column.Operation).Equals("Create") ||
-                  edr.GetString((int)Column.Operation).Equals("Update") ||
-                  edr.GetString((int)Column.Operation).Equals("Delete") ||
-                  edr.GetString((int)Column.Operation).Equals("Rem") ||
+            if (!(edr.GetString((int)Column.Operation).Equals("Create")      ||
+                  edr.GetString((int)Column.Operation).Equals("Update")      ||
+                  edr.GetString((int)Column.Operation).Equals("UpdateByTag") ||
+                  edr.GetString((int)Column.Operation).Equals("Delete")      ||
+                  edr.GetString((int)Column.Operation).Equals("Rem")         ||
                   string.IsNullOrEmpty(edr.GetString((int)Column.Operation))))
             {
                 Console.WriteLine("Invalid Operation value");
@@ -126,6 +126,22 @@ namespace AzureWriter
                         }
 
                         break;
+
+                    case "UpdateByTag":
+                        // Verify that the Tag value is present
+                        if (string.IsNullOrEmpty(edr.GetString((int)Column.Tags)))
+                        {
+                            Console.WriteLine("A tag is mandatory for an UpdateByTag operation");
+                            status = false;
+                        }
+
+                        if (string.IsNullOrEmpty(edr.GetString((int)Column.WorkItemType)))
+                        {
+                            Console.WriteLine("A WorkItemType is mandatory for an UpdateByTag operation");
+                            status = false;
+                        }
+                        break;
+
                     default:
                         break;
                 }

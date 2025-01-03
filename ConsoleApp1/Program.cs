@@ -19,11 +19,13 @@ namespace AzureWriter
                     // Process the formatted Excel Data with the Azure DevOps Server
                     AzureDevOpsApi workItems = new AzureDevOpsApi(workItemData.ServerPath, workItemData.Pat, workItemData.Project);
                     workItems.ProcessWorkItems(workItemData);
+                }else {
+                    Console.WriteLine("The configuration file contains invalid or missing information. Please correct and restart this application");
                 }
             }
             else 
             { 
-                Console.WriteLine("Unable to locate the Azure Excel file to process");
+                Console.WriteLine("The configuration file cannot be located. Please correct and restart this application");
             }           
         }
     }
